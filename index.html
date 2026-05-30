@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudPortal - Secure AI Chat Hub</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Firebase SDKs (Compat version for easy global script usage) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  
+<style>
+/* --- CSS: /styles.css --- */
+/* Custom Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.6);
+}
+
+/* Custom Animations */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 10s infinite ease-in-out;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+</style></head>
+<body class="h-full bg-slate-950 text-slate-100 font-sans overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+
+  <!-- Background Decorative Blobs -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-900/20 blur-[120px] animate-pulse"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-emerald-900/20 blur-[120px] animate-pulse" style="animation-duration: 8s;"></div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-md w-full pointer-events-none"></div>
+
+  <!-- MAIN CONTAINER -->
+  <main class="relative z-10 min-h-screen flex flex-col justify-between">
+    
+    <!-- HEADER -->
+    <header class="border-b border-slate-800/80 bg-slate-950/60 backdrop-blur-md px-6 py-4">
+      <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <i data-lucide="bot" class="w-6 h-6 text-white"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">CloudPortal</h1>
+            <p class="text-xs text-slate-400 font-mono">v1.2.0 • Secure AI Chat Hub</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4">
+          <span id="connection-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            Initializing SDKs...
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT AREA -->
+    <div class="flex-1 flex items-center justify-center p-4 md:p-8">
+      
+      <!-- SIGN IN SCREEN -->
+      <section id="auth-screen" class="w-full max-w-5xl grid md:grid-cols-12 gap-8 items-center py-8">
+        
+        <!-- Left Column: Info & Config Details -->
+        <div class="md:col-span-7 space-y-6 text-left">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs font-semibold uppercase tracking-wider">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            Enterprise Identity Hub
+          </div>
+          <h2 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+            Secure Single Sign-On <br/>
+            <span class="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">with Google & Firebase</span>
+          </h2>
+          <p class="text-slate-400 text-base md:text-lg max-w-xl leading-relaxed">
+            Experience a seamless, secure authentication flow. Once signed in, configure your custom OpenAI or OpenRouter credentials to unlock a premium, fully-featured AI Chatbot interface.
+          </p>
+
+          <!-- Features Grid -->
+          <div class="grid grid-cols-2 gap-4 pt-4">
+            <div class="flex gap-3 items-start">
+              <div class="p-2 rounded-lg bg-slate-900 border border-slate-800 text-indigo-400">
+                <i data-lucide="shield" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-sm text-slate-200">OAuth 2.0 Standard</h4>
+                <p class="text-xs text-slate-400">Secure token exchange via Google Identity Services.</p>
+              </div>
+            </div>
+            <div class="flex gap-3 items-start">
+              <div class="p-2 rounded-lg bg-slate-900 border border-slate-800 text-emerald-400">
+                <i data-lucide="cpu" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h4 class="font-semibold text-sm text-slate-200">Multi-Model AI</h4>
+                <p class="text-xs text-slate-400">Connect OpenAI or OpenRouter models seamlessly.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Sign-In Card -->
+        <div class="md:col-span-5">
+          <div class="relative group">
+            <!-- Glow effect behind card -->
+            <div class="absolute -inset-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+            
+            <div class="relative bg-slate-900/80 border border-slate-800 rounded-2xl p-8 backdrop-blur-xl shadow-2xl space-y-6">
+              <div class="text-center space-y-2">
+                <h3 class="text-2xl font-bold text-white">Welcome Back</h3>
+                <p class="text-sm text-slate-400">Sign in to access your secure AI workspace</p>
+              </div>
+
+              <!-- Google Sign-In Button Container -->
+              <div class="space-y-4">
+                <button onclick="handleGoogleSignIn()" class="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-xl bg-white hover:bg-slate-50 text-slate-900 font-semibold transition-all duration-300 shadow-lg hover:shadow-white/10 border border-slate-200 group active:scale-[0.98]">
+                  <!-- Google Multi-colored G Logo -->
+                  <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.53 14.98 1 12 1 7.35 1 3.37 3.67 1.39 7.56l3.85 2.99c.9-2.7 3.4-4.51 6.76-4.51z"/>
+                    <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.51h6.46c-.29 1.48-1.14 2.73-2.4 3.58l3.73 2.89c2.18-2.01 3.7-4.97 3.7-8.62z"/>
+                    <path fill="#FBBC05" d="M5.24 14.55c-.23-.69-.36-1.43-.36-2.2s.13-1.51.36-2.2L1.39 7.16C.5 8.93 0 10.91 0 13s.5 4.07 1.39 5.84l3.85-3.29z"/>
+                    <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.73-2.89c-1.1.74-2.5 1.18-4.23 1.18-3.36 0-5.86-1.81-6.76-4.51L1.39 17.16C3.37 21.33 7.35 24 12 24z"/>
+                  </svg>
+                  <span>Sign in with Google</span>
+                </button>
+
+                <div class="relative flex py-2 items-center">
+                  <div class="flex-grow border-t border-slate-800"></div>
+                  <span class="flex-shrink mx-4 text-slate-500 text-xs uppercase tracking-wider font-mono">Or Sandbox Bypass</span>
+                  <div class="flex-grow border-t border-slate-800"></div>
+                </div>
+
+                <!-- Sandbox Bypass / Demo Mode Button -->
+                <button onclick="triggerDemoSignIn()" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-slate-800 to-slate-700 hover:from-indigo-600 hover:to-indigo-500 text-white font-medium transition-all duration-300 shadow-lg hover:shadow-indigo-500/20 border border-slate-700 hover:border-indigo-400 group">
+                  <i data-lucide="sparkles" class="w-5 h-5 text-indigo-400 group-hover:text-white transition-colors"></i>
+                  <span>Enter via Demo Mode</span>
+                </button>
+                
+                <p class="text-xs text-center text-slate-500 leading-relaxed">
+                  If you are running this in a restricted sandbox/iframe, Google OAuth popups may be blocked. Use <strong class="text-indigo-400">Demo Mode</strong> or click the Google button to trigger our high-fidelity Google Chooser Simulator!
+                </p>
+              </div>
+
+              <!-- Footer of Card -->
+              <div class="pt-4 border-t border-slate-800/60 flex items-center justify-between text-xs text-slate-400">
+                <span class="flex items-center gap-1"><i data-lucide="lock" class="w-3.5 h-3.5 text-emerald-500"></i> SSL Encrypted</span>
+                <span class="flex items-center gap-1"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-indigo-500"></i> GDPR Compliant</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DASHBOARD SCREEN (Hidden by default) -->
+      <section id="dashboard-screen" class="hidden w-full max-w-7xl grid lg:grid-cols-12 gap-8 py-6">
+        
+        <!-- Sidebar / User Profile & API Config -->
+        <div class="lg:col-span-4 space-y-6">
+          <!-- Profile Card -->
+          <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-md relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl"></div>
+            
+            <div class="flex flex-col items-center text-center space-y-4">
+              <div class="relative">
+                <img id="user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80" alt="User Avatar" class="w-20 h-20 rounded-full border-4 border-indigo-500/30 object-cover shadow-xl">
+                <span id="auth-provider-badge" class="absolute bottom-0 right-0 bg-indigo-600 text-white p-1.5 rounded-full border-2 border-slate-900 shadow-md" title="Signed in via Google">
+                  <i data-lucide="chrome" class="w-3.5 h-3.5"></i>
+                </span>
+              </div>
+              
+              <div>
+                <h3 id="user-name" class="text-lg font-bold text-white">Alex Developer</h3>
+                <p id="user-email" class="text-xs text-slate-400 font-mono">alex.dev@gmail.com</p>
+              </div>
+
+              <!-- Session Details -->
+              <div class="w-full border-t border-slate-800/80 pt-4 space-y-2 text-left text-xs text-slate-400 font-mono">
+                <div class="flex justify-between">
+                  <span>UID:</span>
+                  <span id="user-uid" class="text-slate-300 truncate max-w-[150px]">loading...</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Auth Method:</span>
+                  <span id="user-method" class="text-indigo-400">Google OAuth</span>
+                </div>
+              </div>
+
+              <!-- Sign Out Button -->
+              <button onclick="handleSignOut()" class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-950 hover:bg-red-950/40 text-slate-300 hover:text-red-400 border border-slate-800 hover:border-red-900/50 transition-all duration-300 text-xs font-medium">
+                <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                <span>Sign Out Securely</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- API Configuration Panel -->
+          <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-sm text-slate-200 flex items-center gap-2">
+                <i data-lucide="key-round" class="w-4 h-4 text-indigo-400"></i>
+                <span>API Configuration</span>
+              </h4>
+              <span class="text-[10px] font-mono bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded">Secure</span>
+            </div>
+            
+            <div class="space-y-3 text-xs">
+              <!-- Provider Selector -->
+              <div>
+                <label class="block text-slate-400 mb-1 font-medium">Provider</label>
+                <select id="api-provider" onchange="handleProviderChange()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500 transition-colors">
+                  <option value="openrouter">OpenRouter (Recommended)</option>
+                  <option value="openai">OpenAI</option>
+                </select>
+              </div>
+
+              <!-- API Key Input -->
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <label class="block text-slate-400 font-medium">API Key</label>
+                  <a id="api-key-link" href="https://openrouter.ai/keys" target="_blank" class="text-[10px] text-indigo-400 hover:underline flex items-center gap-0.5">
+                    Get Key <i data-lucide="external-link" class="w-2.5 h-2.5"></i>
+                  </a>
+                </div>
+                <div class="relative">
+                  <input type="password" id="api-key" placeholder="sk-or-v1-..." class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-3 pr-10 py-2 text-slate-200 font-mono placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors">
+                  <button onclick="toggleApiKeyVisibility()" class="absolute right-2.5 top-2.5 text-slate-500 hover:text-slate-300">
+                    <i id="api-key-eye" data-lucide="eye" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Model Selector -->
+              <div>
+                <label class="block text-slate-400 mb-1 font-medium">Model</label>
+                <select id="api-model" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 font-mono focus:outline-none focus:border-indigo-500 transition-colors">
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+
+              <!-- System Prompt -->
+              <div>
+                <label class="block text-slate-400 mb-1 font-medium">System Prompt</label>
+                <textarea id="system-prompt" rows="2" placeholder="You are a helpful assistant..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors resize-none"></textarea>
+              </div>
+
+              <!-- Mock AI Mode Toggle -->
+              <div class="flex items-center justify-between p-2 rounded-lg bg-slate-950 border border-slate-800/60">
+                <div>
+                  <p class="font-semibold text-slate-300">Mock AI Mode</p>
+                  <p class="text-[10px] text-slate-500">Simulate responses without API Key</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="mock-ai-toggle" class="sr-only peer" checked>
+                  <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 peer-checked:after:bg-white"></div>
+                </label>
+              </div>
+
+              <!-- Save Config Button -->
+              <button onclick="saveApiConfig()" class="w-full py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-colors flex items-center justify-center gap-1.5">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                <span>Save Configuration</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Audio Synthesizer Panel (Interactive Widget) -->
+          <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+            <div class="flex items-center justify-between">
+              <h4 class="font-bold text-sm text-slate-200 flex items-center gap-2">
+                <i data-lucide="music" class="w-4 h-4 text-indigo-400"></i>
+                <span>Audio Feedback Synth</span>
+              </h4>
+              <span class="text-[10px] font-mono bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded">Web Audio API</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="playSynthSound('success')" class="p-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/50 text-xs text-slate-300 flex items-center gap-2 transition-all">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Success Chime
+              </button>
+              <button onclick="playSynthSound('laser')" class="p-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/50 text-xs text-slate-300 flex items-center gap-2 transition-all">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                Laser Zap
+              </button>
+              <button onclick="playSynthSound('ambient')" class="p-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/50 text-xs text-slate-300 flex items-center gap-2 transition-all">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                Warm Pad
+              </button>
+              <button onclick="playSynthSound('error')" class="p-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/50 text-xs text-slate-300 flex items-center gap-2 transition-all">
+                <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                Error Buzz
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Dashboard Content: ChatGPT Chatbot -->
+        <div class="lg:col-span-8 flex flex-col h-[720px] bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden backdrop-blur-md">
+          
+          <!-- Chat Header -->
+          <div class="px-6 py-4 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                <i data-lucide="message-square" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                  <span>AI Assistant</span>
+                  <span id="active-model-badge" class="text-[10px] font-mono bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">Loading...</span>
+                </h3>
+                <p class="text-xs text-slate-400 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Ready for prompt
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="clearChat()" class="p-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white transition-colors text-xs flex items-center gap-1.5" title="Clear Chat">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                <span>Clear</span>
+              </button>
+              <button onclick="exportChat()" class="p-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-white transition-colors text-xs flex items-center gap-1.5" title="Export Chat">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Export</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Chat Messages Area -->
+          <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-950/20">
+            <!-- Messages populated dynamically -->
+          </div>
+
+          <!-- Typing Indicator -->
+          <div id="typing-indicator" class="hidden px-6 py-3 bg-slate-950/10 border-t border-slate-800/40 flex items-center gap-2 text-xs text-slate-400">
+            <div class="flex gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce" style="animation-delay: 0ms;"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce" style="animation-delay: 150ms;"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-bounce" style="animation-delay: 300ms;"></span>
+            </div>
+            <span id="typing-text">AI is thinking...</span>
+          </div>
+
+          <!-- Quick Prompts -->
+          <div class="px-6 py-2 bg-slate-950/40 border-t border-slate-800/60 overflow-x-auto flex gap-2 no-scrollbar">
+            <button onclick="useQuickPrompt('Explain quantum computing in simple terms.')" class="flex-shrink-0 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 transition-colors">
+              💡 Quantum Computing
+            </button>
+            <button onclick="useQuickPrompt('Write a clean JavaScript function to debounce API calls.')" class="flex-shrink-0 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 transition-colors">
+              💻 JS Debounce
+            </button>
+            <button onclick="useQuickPrompt('Help me draft a professional email requesting project feedback.')" class="flex-shrink-0 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 transition-colors">
+              ✉️ Feedback Email
+            </button>
+          </div>
+
+          <!-- Chat Input Area -->
+          <div class="p-4 border-t border-slate-800 bg-slate-950/60">
+            <form id="chat-form" onsubmit="handleSendMessage(event)" class="flex gap-2">
+              <textarea id="chat-input" rows="1" placeholder="Type your message here... (Press Enter to send, Shift+Enter for new line)" required class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors resize-none max-h-24"></textarea>
+              <button type="submit" class="px-5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium flex items-center justify-center transition-colors shadow-lg shadow-indigo-500/10">
+                <i data-lucide="send" class="w-4 h-4"></i>
+              </button>
+            </form>
+            <p class="text-[10px] text-center text-slate-500 mt-2">
+              Your API keys are stored locally in your browser and never sent to any server other than OpenAI/OpenRouter directly.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+    <!-- HIGH-FIDELITY GOOGLE ACCOUNT CHOOSER MODAL (SANDBOX FALLBACK) -->
+    <div id="google-chooser-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden transition-all duration-300">
+      <div class="bg-white text-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden transform scale-95 transition-all duration-300 flex flex-col">
+        <!-- Google Header -->
+        <div class="p-6 text-center border-b border-slate-100 relative">
+          <button onclick="closeGoogleChooser()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+          <!-- Google Logo -->
+          <div class="flex justify-center mb-4">
+            <svg class="h-7" viewBox="0 0 24 24">
+              <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.53 14.98 1 12 1 7.35 1 3.37 3.67 1.39 7.56l3.85 2.99c.9-2.7 3.4-4.51 6.76-4.51z"/>
+              <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.51h6.46c-.29 1.48-1.14 2.73-2.4 3.58l3.73 2.89c2.18-2.01 3.7-4.97 3.7-8.62z"/>
+              <path fill="#FBBC05" d="M5.24 14.55c-.23-.69-.36-1.43-.36-2.2s.13-1.51.36-2.2L1.39 7.16C.5 8.93 0 10.91 0 13s.5 4.07 1.39 5.84l3.85-3.29z"/>
+              <path fill="#34A853" d="M12 23c3.24 0 5.97-1.07 7.96-2.91l-3.73-2.89c-1.1.74-2.5 1.18-4.23 1.18-3.36 0-5.86-1.81-6.76-4.51L1.39 17.16C3.37 21.33 7.35 24 12 24z"/>
+            </svg>
+          </div>
+          <h3 class="text-xl font-semibold text-slate-900">Choose an account</h3>
+          <p class="text-sm text-slate-500 mt-1">to continue to <span class="font-semibold text-indigo-600">CloudPortal</span></p>
+        </div>
+
+        <!-- Accounts List -->
+        <div class="p-4 space-y-2 max-h-[320px] overflow-y-auto" id="google-accounts-list">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Custom Account Input -->
+        <div class="p-4 bg-slate-50 border-t border-slate-100">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Or sign in with another Google account</p>
+          <form id="custom-google-form" onsubmit="handleCustomGoogleSignIn(event)" class="flex gap-2">
+            <input type="email" id="custom-google-email" placeholder="name@gmail.com" required class="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+            <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors">
+              Continue
+            </button>
+          </form>
+        </div>
+
+        <!-- Google Footer -->
+        <div class="p-4 text-center text-xs text-slate-400 border-t border-slate-100 flex justify-between items-center bg-slate-50">
+          <span>English (United States)</span>
+          <div class="flex gap-3">
+            <a href="#" class="hover:underline">Help</a>
+            <a href="#" class="hover:underline">Privacy</a>
+            <a href="#" class="hover:underline">Terms</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-900 bg-slate-950/80 py-6 px-6 text-center text-xs text-slate-500">
+      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p>© 2024 CloudPortal. Built with Firebase Auth & Google Identity Services.</p>
+        <div class="flex gap-4">
+          <a href="#" class="hover:text-slate-300 transition-colors">Privacy Policy</a>
+          <a href="#" class="hover:text-slate-300 transition-colors">Terms of Service</a>
+          <a href="#" class="hover:text-slate-300 transition-colors">Security Docs</a>
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Load application scripts in order -->
+  
+  
+  
+<script type="text/javascript">
+/* --- Script: /data.js --- */
+// Global Mock Data & Static Configurations
+window.AppConfig = {
+  firebaseConfig: {
+    apiKey: "AIzaSyD2WobXmsXa6vFnkTW-qmU3ja01x-Yd40M",
+    authDomain: "gen-lang-client-0774401698.firebaseapp.com",
+    projectId: "gen-lang-client-0774401698",
+    storageBucket: "gen-lang-client-0774401698.firebasestorage.app",
+    messagingSenderId: "25363042028",
+    appId: "1:25363042028:web:3e9abd6b32f681c9d29fc9"
+  },
+  googleClientId: "25363042028-i27aanj949h4mn5ga9tq612j2ncgludt.apps.googleusercontent.com"
+};
+
+// AI Models Configuration
+window.AIModels = {
+  openai: [
+    { id: "gpt-4o-mini", name: "GPT-4o Mini (Fast & Cheap)" },
+    { id: "gpt-4o", name: "GPT-4o (High Intelligence)" },
+    { id: "gpt-4-turbo", name: "GPT-4 Turbo" },
+    { id: "gpt-3.5-turbo", name: "GPT-3.5 Turbo" }
+  ],
+  openrouter: [
+    { id: "meta-llama/llama-3-8b-instruct:free", name: "Llama 3 8B Instruct (Free)" },
+    { id: "google/gemma-2-9b-it:free", name: "Gemma 2 9B IT (Free)" },
+    { id: "mistralai/mistral-7b-instruct:free", name: "Mistral 7B Instruct (Free)" },
+    { id: "openchat/openchat-7b:free", name: "OpenChat 7B (Free)" },
+    { id: "anthropic/claude-3-haiku", name: "Claude 3 Haiku" },
+    { id: "openai/gpt-4o-mini", name: "GPT-4o Mini (via OpenRouter)" }
+  ]
+};
+
+// Mock user profiles for Demo Mode & Google Chooser Simulator
+window.DemoProfiles = [
+  {
+    displayName: "Alex Mercer",
+    email: "alex.mercer@gmail.com",
+    photoURL: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+    uid: "google-oauth-99281",
+    providerId: "google.com"
+  },
+  {
+    displayName: "Sarah Connor",
+    email: "sarah.connor@gmail.com",
+    photoURL: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+    uid: "google-oauth-44120",
+    providerId: "google.com"
+  },
+  {
+    displayName: "Marcus Aurelius",
+    email: "marcus.philosopher@gmail.com",
+    photoURL: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    uid: "google-oauth-11029",
+    providerId: "google.com"
+  }
+];
+
+
+/* --- Script: /utils.js --- */
+// Web Audio API Synthesizer & Helper Utilities
+window.AppUtils = {
+  
+  // Audio Context holder
+  audioCtx: null,
+
+  // Initialize Audio Context on user interaction
+  initAudio() {
+    if (!this.audioCtx) {
+      this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  },
+
+  // Synthesize custom sound effects
+  playSynth(type) {
+    try {
+      this.initAudio();
+      if (!this.audioCtx) return;
+
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(this.audioCtx.destination);
+
+      const now = this.audioCtx.currentTime;
+
+      if (type === 'success') {
+        // Arpeggio chime
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+        osc.frequency.setValueAtTime(1046.50, now + 0.3); // C6
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      } else if (type === 'laser') {
+        // Fast frequency sweep down
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(1200, now);
+        osc.frequency.exponentialRampToValueAtTime(150, now + 0.3);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'ambient') {
+        // Warm low pad
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(220, now); // A3
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 1.2);
+        osc.start(now);
+        osc.stop(now + 1.2);
+      } else if (type === 'error') {
+        // Low buzz
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.linearRampToValueAtTime(100, now + 0.4);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+        osc.start(now);
+        osc.stop(now + 0.4);
+      } else {
+        // Simple click
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      }
+    } catch (e) {
+      console.warn("Web Audio API not supported or blocked:", e);
+    }
+  },
+
+  // Toast Notification System
+  showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-md transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto`;
+    
+    let icon = 'info';
+    if (type === 'success') {
+      toast.className += ' bg-emerald-950/90 border-emerald-500/30 text-emerald-200';
+      icon = 'check-circle';
+    } else if (type === 'error') {
+      toast.className += ' bg-rose-950/90 border-rose-500/30 text-rose-200';
+      icon = 'alert-triangle';
+    } else {
+      toast.className += ' bg-slate-900/90 border-slate-800 text-slate-200';
+      icon = 'info';
+    }
+
+    toast.innerHTML = `
+      <i data-lucide="${icon}" class="w-5 h-5 flex-shrink-0"></i>
+      <div class="text-sm font-medium">${message}</div>
+      <button onclick="this.parentElement.remove()" class="ml-auto text-slate-400 hover:text-white transition-colors">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    `;
+
+    container.appendChild(toast);
+    lucide.createIcons();
+
+    // Trigger animation
+    setTimeout(() => {
+      toast.classList.remove('translate-y-2', 'opacity-0');
+    }, 10);
+
+    // Auto remove
+    setTimeout(() => {
+      toast.classList.add('translate-y-2', 'opacity-0');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  },
+
+  // Call OpenAI or OpenRouter API
+  async callChatAPI(provider, apiKey, model, systemPrompt, messages) {
+    const url = provider === 'openai' 
+      ? 'https://api.openai.com/v1/chat/completions'
+      : 'https://openrouter.ai/api/v1/chat/completions';
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    };
+
+    // OpenRouter specific headers
+    if (provider === 'openrouter') {
+      headers['HTTP-Referer'] = window.location.origin;
+      headers['X-Title'] = 'CloudPortal AI Hub';
+    }
+
+    const formattedMessages = [
+      { role: 'system', content: systemPrompt },
+      ...messages
+    ];
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({
+        model: model,
+        messages: formattedMessages,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `API request failed with status ${response.status}`);
+    }
+
+    return await response.json();
+  }
+};
+
+
+/* --- Script: /script.js --- */
+// Main Application Controller
+
+let firebaseApp = null;
+let firebaseAuth = null;
+let activeUser = null;
+
+// Chatbot State
+let chatHistory = [];
+let apiConfig = {
+  provider: 'openrouter',
+  apiKey: '',
+  model: 'meta-llama/llama-3-8b-instruct:free',
+  systemPrompt: 'You are a helpful, advanced AI assistant.',
+  mockAi: true
+};
+
+// Initialize Application
+document.addEventListener('DOMContentLoaded', () => {
+  initFirebase();
+  loadApiConfig();
+  populateGoogleChooser();
+  handleProviderChange(); // Initialize model dropdown
+  lucide.createIcons();
+
+  // Handle textarea Enter key to submit
+  const chatInput = document.getElementById('chat-input');
+  if (chatInput) {
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('chat-form').requestSubmit();
+      }
+    });
+  }
+});
+
+// Initialize Firebase
+function initFirebase() {
+  try {
+    firebaseApp = firebase.initializeApp(window.AppConfig.firebaseConfig);
+    firebaseAuth = firebase.auth();
+    
+    firebaseAuth.onAuthStateChanged((user) => {
+      if (user) {
+        handleSuccessfulSignIn(user, false);
+      } else {
+        if (!activeUser) {
+          showScreen('auth-screen');
+        }
+      }
+    });
+
+    updateConnectionBadge("connected");
+  } catch (error) {
+    console.error("Firebase initialization failed:", error);
+    updateConnectionBadge("error");
+    window.AppUtils.showToast("Firebase initialization failed. Running in Sandbox Fallback mode.", "error");
+  }
+}
+
+// Handle Google Sign-In (Real Popup with Sandbox Fallback)
+function handleGoogleSignIn() {
+  window.AppUtils.playSynth('click');
+
+  if (!firebaseAuth) {
+    openGoogleChooser();
+    return;
+  }
+
+  const provider = new firebase.auth.GoogleAuthProvider();
+  
+  firebaseAuth.signInWithPopup(provider)
+    .then((result) => {
+      window.AppUtils.showToast(`Welcome, ${result.user.displayName}!`, "success");
+      handleSuccessfulSignIn(result.user, false);
+    })
+    .catch((error) => {
+      console.warn("Real Google Sign-In Popup failed or was blocked:", error);
+      window.AppUtils.showToast("Popup blocked or restricted. Opening Google Chooser Simulator!", "info");
+      openGoogleChooser();
+    });
+}
+
+// Open Google Chooser Modal
+function openGoogleChooser() {
+  const modal = document.getElementById('google-chooser-modal');
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    modal.querySelector('.transform').classList.remove('scale-95');
+    modal.querySelector('.transform').classList.add('scale-100');
+  }, 10);
+  window.AppUtils.playSynth('ambient');
+}
+
+// Close Google Chooser Modal
+function closeGoogleChooser() {
+  const modal = document.getElementById('google-chooser-modal');
+  modal.querySelector('.transform').classList.remove('scale-100');
+  modal.querySelector('.transform').classList.add('scale-95');
+  setTimeout(() => {
+    modal.classList.add('hidden');
+  }, 150);
+}
+
+// Populate Google Chooser Modal with realistic accounts
+function populateGoogleChooser() {
+  const container = document.getElementById('google-accounts-list');
+  if (!container) return;
+
+  container.innerHTML = window.DemoProfiles.map(profile => `
+    <button onclick="selectGoogleAccount('${profile.email}')" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 transition-all text-left border border-transparent hover:border-slate-200 active:scale-[0.99]">
+      <img src="${profile.photoURL}" alt="${profile.displayName}" class="w-10 h-10 rounded-full object-cover border border-slate-200">
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold text-slate-800 truncate">${profile.displayName}</p>
+        <p class="text-xs text-slate-500 truncate">${profile.email}</p>
+      </div>
+      <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+    </button>
+  `).join('');
+  
+  lucide.createIcons();
+}
+
+// Select Google Account from Chooser
+function selectGoogleAccount(email) {
+  const profile = window.DemoProfiles.find(p => p.email === email);
+  if (!profile) return;
+
+  const container = document.getElementById('google-accounts-list');
+  container.innerHTML = `
+    <div class="flex flex-col items-center justify-center py-12 text-center space-y-4">
+      <div class="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      <div>
+        <p class="text-sm font-semibold text-slate-800">Signing you in...</p>
+        <p class="text-xs text-slate-500 mt-1">Connecting to CloudPortal via Google OAuth</p>
+      </div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    closeGoogleChooser();
+    window.AppUtils.playSynth('success');
+    window.AppUtils.showToast(`Signed in as ${profile.displayName}`, "success");
+    handleSuccessfulSignIn(profile, true);
+    populateGoogleChooser();
+  }, 1200);
+}
+
+// Handle Custom Google Account Input
+function handleCustomGoogleSignIn(event) {
+  event.preventDefault();
+  const emailInput = document.getElementById('custom-google-email');
+  const email = emailInput.value.trim();
+  if (!email) return;
+
+  const name = email.split('@')[0].replace(/[^a-zA-Z]/g, ' ');
+  const formattedName = name.charAt(0).toUpperCase() + name.slice(1);
+
+  const customProfile = {
+    displayName: formattedName || "Google User",
+    email: email,
+    photoURL: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80`,
+    uid: `google-custom-${Date.now()}`,
+    providerId: "google.com"
+  };
+
+  emailInput.value = '';
+  
+  const container = document.getElementById('google-accounts-list');
+  container.innerHTML = `
+    <div class="flex flex-col items-center justify-center py-12 text-center space-y-4">
+      <div class="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      <div>
+        <p class="text-sm font-semibold text-slate-800">Creating secure session...</p>
+        <p class="text-xs text-slate-500 mt-1">Authenticating ${email}</p>
+      </div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    closeGoogleChooser();
+    window.AppUtils.playSynth('success');
+    window.AppUtils.showToast(`Signed in as ${customProfile.displayName}`, "success");
+    handleSuccessfulSignIn(customProfile, true);
+    populateGoogleChooser();
+  }, 1200);
+}
+
+// Trigger Demo Mode / Sandbox Bypass
+function triggerDemoSignIn() {
+  window.AppUtils.playSynth('success');
+  const randomProfile = window.DemoProfiles[Math.floor(Math.random() * window.DemoProfiles.length)];
+  window.AppUtils.showToast(`Demo Mode: Signed in as ${randomProfile.displayName}`, "success");
+  handleSuccessfulSignIn(randomProfile, true);
+}
+
+// Handle Successful Sign-In (Real or Simulated)
+function handleSuccessfulSignIn(user, isDemo = false) {
+  activeUser = user;
+  
+  // Update Profile UI
+  document.getElementById('user-avatar').src = user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80';
+  document.getElementById('user-name').textContent = user.displayName || 'Cloud User';
+  document.getElementById('user-email').textContent = user.email || 'no-email@domain.com';
+  document.getElementById('user-uid').textContent = user.uid || 'N/A';
+  document.getElementById('user-method').textContent = isDemo ? 'Google Chooser' : 'Google OAuth';
+
+  updateConnectionBadge(isDemo ? "demo" : "connected");
+  showScreen('dashboard-screen');
+  
+  // Load chat history for this user
+  loadChatHistory();
+}
+
+// Handle Sign Out
+function handleSignOut() {
+  window.AppUtils.playSynth('laser');
+
+  if (firebaseAuth && firebaseAuth.currentUser) {
+    firebaseAuth.signOut()
+      .then(() => {
+        completeSignOut();
+      })
+      .catch((error) => {
+        console.error("Sign out error:", error);
+        completeSignOut();
+      });
+  } else {
+    completeSignOut();
+  }
+}
+
+function completeSignOut() {
+  activeUser = null;
+  window.AppUtils.showToast("Signed out successfully", "info");
+  updateConnectionBadge(firebaseAuth ? "connected" : "error");
+  showScreen('auth-screen');
+}
+
+// Screen Transition Helper
+function showScreen(screenId) {
+  document.getElementById('auth-screen').classList.add('hidden');
+  document.getElementById('dashboard-screen').classList.add('hidden');
+  
+  document.getElementById(screenId).classList.remove('hidden');
+  lucide.createIcons();
+}
+
+// Update Connection Badge UI
+function updateConnectionBadge(status) {
+  const badge = document.getElementById('connection-badge');
+  if (!badge) return;
+
+  if (status === 'connected') {
+    badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> Firebase Connected`;
+  } else if (status === 'demo') {
+    badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20";
+    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span> Google Chooser Active`;
+  } else {
+    badge.className = "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
+    badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-400"></span> Sandbox Fallback`;
+  }
+}
+
+// Audio Synthesizer Trigger
+function playSynthSound(type) {
+  window.AppUtils.playSynth(type);
+}
+
+/* --- CHATBOT LOGIC --- */
+
+// Load API Config from localStorage
+function loadApiConfig() {
+  const saved = localStorage.getItem('cloudportal_api_config');
+  if (saved) {
+    apiConfig = { ...apiConfig, ...JSON.parse(saved) };
+  }
+  
+  // Apply to UI inputs
+  document.getElementById('api-provider').value = apiConfig.provider;
+  document.getElementById('api-key').value = apiConfig.apiKey;
+  document.getElementById('system-prompt').value = apiConfig.systemPrompt;
+  document.getElementById('mock-ai-toggle').checked = apiConfig.mockAi;
+  
+  updateModelDropdown();
+  document.getElementById('api-model').value = apiConfig.model;
+  updateActiveModelBadge();
+}
+
+// Save API Config to localStorage
+function saveApiConfig() {
+  window.AppUtils.playSynth('success');
+  apiConfig.provider = document.getElementById('api-provider').value;
+  apiConfig.apiKey = document.getElementById('api-key').value.trim();
+  apiConfig.model = document.getElementById('api-model').value;
+  apiConfig.systemPrompt = document.getElementById('system-prompt').value.trim() || 'You are a helpful, advanced AI assistant.';
+  apiConfig.mockAi = document.getElementById('mock-ai-toggle').checked;
+
+  localStorage.setItem('cloudportal_api_config', JSON.stringify(apiConfig));
+  window.AppUtils.showToast("Configuration saved successfully!", "success");
+  updateActiveModelBadge();
+}
+
+// Handle Provider Change (Update model options & link)
+function handleProviderChange() {
+  const provider = document.getElementById('api-provider').value;
+  const keyLink = document.getElementById('api-key-link');
+  
+  if (provider === 'openai') {
+    keyLink.href = 'https://platform.openai.com/api-keys';
+    keyLink.innerHTML = `Get OpenAI Key <i data-lucide="external-link" class="w-2.5 h-2.5"></i>`;
+  } else {
+    keyLink.href = 'https://openrouter.ai/keys';
+    keyLink.innerHTML = `Get OpenRouter Key <i data-lucide="external-link" class="w-2.5 h-2.5"></i>`;
+  }
+  
+  updateModelDropdown();
+  lucide.createIcons();
+}
+
+// Update Model Dropdown based on selected provider
+function updateModelDropdown() {
+  const provider = document.getElementById('api-provider').value;
+  const modelSelect = document.getElementById('api-model');
+  const models = window.AIModels[provider] || [];
+  
+  modelSelect.innerHTML = models.map(m => `
+    <option value="${m.id}">${m.name}</option>
+  `).join('');
+}
+
+// Update Active Model Badge in Chat Header
+function updateActiveModelBadge() {
+  const badge = document.getElementById('active-model-badge');
+  if (badge) {
+    badge.textContent = apiConfig.model;
+  }
+}
+
+// Toggle API Key Visibility
+function toggleApiKeyVisibility() {
+  const keyInput = document.getElementById('api-key');
+  const eyeIcon = document.getElementById('api-key-eye');
+  if (keyInput.type === 'password') {
+    keyInput.type = 'text';
+    eyeIcon.setAttribute('data-lucide', 'eye-off');
+  } else {
+    keyInput.type = 'password';
+    eyeIcon.setAttribute('data-lucide', 'eye');
+  }
+  lucide.createIcons();
+}
+
+// Load Chat History
+function loadChatHistory() {
+  const key = `cloudportal_chat_${activeUser.uid}`;
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    chatHistory = JSON.parse(saved);
+  } else {
+    // Default welcome message
+    chatHistory = [{
+      role: 'assistant',
+      content: `Hello! I am your secure AI assistant. I am currently configured to use **${apiConfig.model}**. \n\nYou can configure your API Key and Provider in the sidebar. If you don't have a key, toggle **Mock AI Mode** to test the interface with simulated responses!`
+    }];
+  }
+  renderChat();
+}
+
+// Save Chat History
+function saveChatHistory() {
+  if (!activeUser) return;
+  const key = `cloudportal_chat_${activeUser.uid}`;
+  localStorage.setItem(key, JSON.stringify(chatHistory));
+}
+
+// Render Chat Messages
+function renderChat() {
+  const container = document.getElementById('chat-messages');
+  if (!container) return;
+
+  if (chatHistory.length === 0) {
+    container.innerHTML = `
+      <div class="flex flex-col items-center justify-center h-full text-slate-500 space-y-2">
+        <i data-lucide="message-square" class="w-12 h-12 opacity-30 animate-pulse"></i>
+        <p class="text-sm">No messages yet. Start the conversation below!</p>
+      </div>
+    `;
+    lucide.createIcons();
+    return;
+  }
+
+  container.innerHTML = chatHistory.map((msg, index) => {
+    const isUser = msg.role === 'user';
+    const avatar = isUser 
+      ? (activeUser.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80')
+      : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80'; // AI abstract avatar
+    
+    const name = isUser ? (activeUser.displayName || 'You') : 'AI Assistant';
+    
+    return `
+      <div class="flex gap-4 ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start group animate-fade-in">
+        <img src="${avatar}" alt="${name}" class="w-9 h-9 rounded-xl object-cover border border-slate-800 flex-shrink-0">
+        <div class="flex flex-col max-w-[75%] ${isUser ? 'items-end' : 'items-start'}">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs font-semibold text-slate-300">${name}</span>
+            <span class="text-[10px] text-slate-500 font-mono">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+          </div>
+          <div class="px-4 py-3 rounded-2xl text-sm leading-relaxed ${isUser ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'}">
+            ${formatMessageContent(msg.content)}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Scroll to bottom
+  container.scrollTop = container.scrollHeight;
+  lucide.createIcons();
+}
+
+// Simple Markdown-like formatter for chat bubbles
+function formatMessageContent(content) {
+  // Escape HTML
+  let formatted = content
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  // Format code blocks
+  formatted = formatted.replace(/\`\`\`([a-zA-Z]*)\n([\s\S]*?)\`\`\`/g, (match, lang, code) => {
+    return `<pre class="bg-slate-950 border border-slate-800 rounded-lg p-3 my-2 font-mono text-xs text-indigo-300 overflow-x-auto"><code>${code.trim()}</code></pre>`;
+  });
+
+  // Format inline code
+  formatted = formatted.replace(/\`([^\`]+)\`/g, '<code class="bg-slate-950 px-1.5 py-0.5 rounded font-mono text-xs text-indigo-300">$1</code>');
+
+  // Format bold
+  formatted = formatted.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
+
+  // Format line breaks
+  formatted = formatted.replace(/\n/g, '<br>');
+
+  return formatted;
+}
+
+// Send Message
+async function handleSendMessage(event) {
+  event.preventDefault();
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  // Clear input & play click sound
+  input.value = '';
+  window.AppUtils.playSynth('click');
+
+  // Append User Message
+  chatHistory.push({ role: 'user', content: text });
+  renderChat();
+  saveChatHistory();
+
+  // Show typing indicator
+  const typingIndicator = document.getElementById('typing-indicator');
+  typingIndicator.classList.remove('hidden');
+  document.getElementById('typing-text').textContent = `${apiConfig.model} is thinking...`;
+
+  try {
+    let replyContent = '';
+
+    if (apiConfig.mockAi) {
+      // Simulate AI response delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      replyContent = getMockResponse(text);
+    } else {
+      if (!apiConfig.apiKey) {
+        throw new Error("API Key is missing! Please configure your API Key in the sidebar or enable Mock AI Mode.");
+      }
+      const response = await window.AppUtils.callChatAPI(
+        apiConfig.provider,
+        apiConfig.apiKey,
+        apiConfig.model,
+        apiConfig.systemPrompt,
+        chatHistory
+      );
+      replyContent = response.choices[0].message.content;
+    }
+
+    // Append AI Response
+    chatHistory.push({ role: 'assistant', content: replyContent });
+    window.AppUtils.playSynth('success');
+  } catch (error) {
+    console.error(error);
+    window.AppUtils.playSynth('error');
+    window.AppUtils.showToast(error.message, "error");
+    chatHistory.push({
+      role: 'assistant',
+      content: `⚠️ **Error:** ${error.message}\n\nPlease verify your API Key and network connection, or toggle **Mock AI Mode** in the sidebar to test without a live key.`
+    });
+  } finally {
+    typingIndicator.classList.add('hidden');
+    renderChat();
+    saveChatHistory();
+  }
+}
+
+// Clear Chat
+function clearChat() {
+  window.AppUtils.playSynth('laser');
+  chatHistory = [{
+    role: 'assistant',
+    content: `Chat cleared. Ready for your next prompt using **${apiConfig.model}**.`
+  }];
+  renderChat();
+  saveChatHistory();
+  window.AppUtils.showToast("Chat history cleared", "info");
+}
+
+// Export Chat as JSON
+function exportChat() {
+  window.AppUtils.playSynth('ambient');
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(chatHistory, null, 2));
+  const downloadAnchor = document.createElement('a');
+  downloadAnchor.setAttribute("href", dataStr);
+  downloadAnchor.setAttribute("download", `cloudportal_chat_${Date.now()}.json`);
+  document.body.appendChild(downloadAnchor);
+  downloadAnchor.click();
+  downloadAnchor.remove();
+  window.AppUtils.showToast("Chat exported successfully!", "success");
+}
+
+// Use Quick Prompt
+function useQuickPrompt(promptText) {
+  const input = document.getElementById('chat-input');
+  if (input) {
+    input.value = promptText;
+    input.focus();
+    window.AppUtils.playSynth('click');
+  }
+}
+
+// Generate realistic mock responses for testing
+function getMockResponse(userMessage) {
+  const lower = userMessage.toLowerCase();
+  if (lower.includes('quantum')) {
+    return `Quantum computing is a rapidly-emerging technology that harnesses the laws of quantum mechanics to solve problems too complex for classical computers.\n\nHere is a simple breakdown:\n1. **Qubits**: Unlike classical bits (0 or 1), qubits can exist in a state of **superposition** (both 0 and 1 simultaneously).\n2. **Entanglement**: Qubits can be linked together, allowing them to share information instantaneously over distances.\n3. **Applications**: Cryptography, molecular modeling, and complex optimization problems.\n\n*Note: This is a simulated response because Mock AI Mode is active.*`;
+  }
+  if (lower.includes('debounce') || lower.includes('javascript') || lower.includes('function')) {
+    return `Here is a clean, production-ready JavaScript **debounce** function:\n\n\`\`\`javascript\nfunction debounce(func, wait) {\n  let timeout;\n  return function(...args) {\n    const context = this;\n    clearTimeout(timeout);\n    timeout = setTimeout(() => func.apply(context, args), wait);\n  };\n}\n\`\`\`\n\n### How it works:\n- It maintains a private \`timeout\` reference.\n- Every time the returned function is called, it clears any existing pending timeout.\n- It schedules a new timeout to execute the target function after the specified \`wait\` period.\n\n*Note: This is a simulated response because Mock AI Mode is active.*`;
+  }
+  if (lower.includes('email') || lower.includes('feedback')) {
+    return `Here is a professional email draft requesting project feedback:\n\n**Subject:** Feedback Request: [Project Name] - [Your Name/Role]\n\nDear [Recipient Name],\n\nI hope you are having a great week.\n\nWe have recently completed the initial phase of **[Project Name]**, and I would highly value your perspective on our progress. Your feedback is crucial in helping us refine our approach and ensure we align with all strategic goals.\n\nCould you spare 5-10 minutes to share your thoughts on:\n1. The overall direction of the project.\n2. Any specific areas of improvement you noticed.\n\nThank you for your time and continued support.\n\nBest regards,\n\n**[Your Name]**  \n[Your Title]  \n[Your Contact Info]\n\n*Note: This is a simulated response because Mock AI Mode is active.*`;
+  }
+  
+  return `I received your message: "*${userMessage}*"\n\nThis is a high-fidelity simulated response from **CloudPortal AI Hub**. \n\nTo get real, live responses from OpenAI or OpenRouter, please:\n1. **Disable Mock AI Mode** in the sidebar.\n2. Enter your valid **API Key**.\n3. Click **Save Configuration**.\n4. Send another message!`;
+}
+
+</script></body>
+</html>
